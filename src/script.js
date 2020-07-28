@@ -1,5 +1,5 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('got member list', memberList)
+    console.log('got member list', request)
     const memberList = request
     const gistTable = createGistTable()
     const memberData = []

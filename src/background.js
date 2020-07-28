@@ -13,16 +13,17 @@ chrome.runtime.onMessage.addListener(async (request, sender) => {
             return
         }
     }
+    console.log(memberData)
 
     let report = ''
 
     for(let member of memberData){
-        let URL = `https://gist.github.com/${member.githubID}/${member.gistID}`
+        const URL = `https://gist.githubusercontent.com${member.code}`
         report += `${member.memberID} ${member.timeout} ${URL}\n`
         chrome.downloads.download({
             saveAs: false,
-            url: member.code,
-            filename: `${memberID}.${member.code.split('.').slice(-1)}`
+            url: URL,
+            // filename: validate_filename(`${member.memberID}.${member.code.split('.').slice(-1)}`)
         })
     }
 
@@ -56,10 +57,11 @@ const getGistInfo = (member) => new Promise((resolve, reject) => {
     fetch(URL)
         .then(response => response.text())
         .then(text => {
-            console.log('Get data from gist', URL, text)
-            let time = getLastTime(text)
-            let code = getCode(text)
-            resolve([isTimeout(time), code])
+            console.log('Get data from gist', URL)
+            // console.log(text)
+            let time, code;
+            [time, code] = parseHTML(text)
+            resolve([time, code])
         })
         .catch(error => {
             reject(error)
@@ -67,14 +69,37 @@ const getGistInfo = (member) => new Promise((resolve, reject) => {
 
 })
 
-const getLastTime = (html) => {
-
+const parseHTML = (html) => {
+    const domparser = new DOMParser()
+    const doc = domparser.parseFromString(html, 'text/html')
+    // gist uses jQuery time-ago tag. Cannot read with pure js
+    const datetime = doc.getElementsByTagName('time-ago')[0].getAttribute('datetime')
+    const date = new Date(datetime)
+    const buttonDivs = doc.getElementsByClassName('file-actions')
+    return [getTimeString(date), getCode(buttonDivs)]
 }
 
-const isTimeout = (time) => {
+const getTimeString = (date) => {
+    const current = new Date()
+    const late = '마지막 시간이 7시를 넘었습니다. 확인이 필요합니다'
+    const attend = '7시 이전에 제출 했습니다'
 
+    // If the submission date is equal to today
+    if (current.getDay() === date.getDay()){
+        return late
+    }
+
+    // If the submission hour is over 19
+    if (date.getHours() >= 19){
+        return late
+    }
+
+    return attend
 }
 
-const getCode = (html) => {
+const getCode = (buttonDivs) => {
+    // Assume first element is the right file
+    const code = buttonDivs[0].firstElementChild.getAttribute('href')
 
+    return code
 }
