@@ -1,10 +1,15 @@
 // https://developer.chrome.com/extensions/xhr
 
+// Recieved Message from script.js
 chrome.runtime.onMessage.addListener(async (request, sender) => {
     console.log('got member data', request)
     const memberData = request;
 
     for(let member of memberData){
+        // Member is not in list
+        if (!isMemberInList(member))
+            continue
+
         try {
             [member.timeout, member.code] =  await getGistInfo(member)
         } catch(error) {
@@ -18,13 +23,23 @@ chrome.runtime.onMessage.addListener(async (request, sender) => {
     let report = ''
 
     for(let member of memberData){
-        const URL = `https://gist.githubusercontent.com${member.code}`
-        report += `${member.memberID} ${member.timeout} ${URL}\n`
-        chrome.downloads.download({
-            saveAs: false,
-            url: URL,
-            // filename: validate_filename(`${member.memberID}.${member.code.split('.').slice(-1)}`)
-        })
+        if (isMemberInList(member)){
+            const URL = `https://gist.githubusercontent.com${member.code}`
+            const fileExt = member.code.split('.').slice(-1)[0]
+            console.log(fileExt)
+            report += `${member.memberID} ${member.timeout} ${getGistURL(member)}\n`
+            chrome.downloads.download({
+                saveAs: false,
+                url: URL,
+                filename: validate_filename(`${member.memberID}.${fileExt}`)
+            })
+        } else {
+            // Member is not in list
+            report += `${member.memberID} COULD NOT BE FOUND\n`
+        }
+
+
+        
     }
 
     chrome.downloads.download({
@@ -34,6 +49,13 @@ chrome.runtime.onMessage.addListener(async (request, sender) => {
     })
 
 })
+
+const isMemberInList = (member) => {
+    if (member.gistID === null)
+        return false
+    else
+        return true
+}
 
 const createURLBlob = (report) => {
     const blob = new Blob([report], {type: "text/plain"})
@@ -52,8 +74,7 @@ const validate_filename = (name) => {
 
 
 const getGistInfo = (member) => new Promise((resolve, reject) => {
-    // To prevent attack, create URL instantly
-    const URL = `https://gist.github.com/${member.githubID}/${member.gistID}`
+    const URL = getGistURL(member)
     fetch(URL)
         .then(response => response.text())
         .then(text => {
@@ -69,6 +90,12 @@ const getGistInfo = (member) => new Promise((resolve, reject) => {
 
 })
 
+const getGistURL = (member) => {
+    // To prevent malicious attack, create URL with fixed domain
+    const URL = `https://gist.github.com/${member.githubID}/${member.gistID}`
+    return URL
+}
+
 const parseHTML = (html) => {
     const domparser = new DOMParser()
     const doc = domparser.parseFromString(html, 'text/html')
@@ -76,9 +103,17 @@ const parseHTML = (html) => {
     const datetime = doc.getElementsByTagName('time-ago')[0].getAttribute('datetime')
     const date = new Date(datetime)
     const buttonDivs = doc.getElementsByClassName('file-actions')
-    return [getTimeString(date), getCode(buttonDivs)]
+    return [date.toLocaleString(), getCode(buttonDivs)]
 }
 
+const getCode = (buttonDivs) => {
+    // Assume first element is the right file
+    const code = buttonDivs[0].firstElementChild.getAttribute('href')
+
+    return code
+}
+
+// Deprecated
 const getTimeString = (date) => {
     const current = new Date()
     const late = '마지막 시간이 7시를 넘었습니다. 확인이 필요합니다'
@@ -95,11 +130,4 @@ const getTimeString = (date) => {
     }
 
     return attend
-}
-
-const getCode = (buttonDivs) => {
-    // Assume first element is the right file
-    const code = buttonDivs[0].firstElementChild.getAttribute('href')
-
-    return code
 }

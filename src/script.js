@@ -46,6 +46,11 @@ const createGistTable = () => {
 }
 
 const getGistAddr = (memberID, gistTable) => {
+    // If memberID is not in list
+    if (!(memberID in gistTable)){
+        return [null, null]
+    }
+
     const githubID = gistTable[memberID].githubID
     const gistID = gistTable[memberID].gistID
     return [githubID, gistID]
