@@ -1,11 +1,15 @@
 // https://developer.chrome.com/extensions/xhr
 
 // Recieved Message from script.js
-chrome.runtime.onMessage.addListener(async (request, sender) => {
+chrome.runtime.onMessage.addListener((request, sender) => {
     console.log('got member data', request)
     let {day, members} = request
 
+    processGist(day, members)
+    // Message recieved -> processGist -> processDownload
+})
 
+const processGist = async (day, members) => {
     for(let member of members){
         // Member is not in list
         if (!member.exist)
@@ -21,40 +25,52 @@ chrome.runtime.onMessage.addListener(async (request, sender) => {
     }
     console.log(members)
 
+    processDownload(day, members)
+}
+
+const processDownload = async (day, members) => {
     let report = ''
+    let zip = new JSZip()
 
     for(let member of members){
-        if (member.exist){
-            const URL = `https://gist.githubusercontent.com${member.code}`
-            const fileExt = member.code.split('.').slice(-1)[0]
-            console.log(fileExt)
-            report += `${member.memberID} ${member.timeout} ${getGistURL(member)}\n`
-            chrome.downloads.download({
-                saveAs: false,
-                url: URL,
-                filename: validate_filename(`${member.memberID}.${fileExt}`)
-            })
-        } else {
-            // Member is not in list
+        if (!member.exist){
             report += `${member.memberID} COULD NOT BE FOUND\n`
+            continue
         }
 
+        let memberFolder = zip.folder(member.memberID)
 
-        
+        for(let gistFileID of member.codes){
+            let blob = await downloadFile(gistFileID)
+            console.log(blob)
+            memberFolder.file(gistFileID.split('/').splice(-1)[0], blob)
+        }
+
+        report += `${member.memberID} ${member.timeout} ${getGistURL(member)}\n`
     }
+
+    zip.file('report.txt', new Blob([report], {type: "text/plain"}))
+    let file = await zip.generateAsync({type:"blob"})
 
     chrome.downloads.download({
         saveAs: false,
-        url: createURLBlob(report),
-        filename: 'report.txt'
+        url: URL.createObjectURL(file),
+        filename: `${day}.zip`
     })
-
-})
-
-const createURLBlob = (report) => {
-    const blob = new Blob([report], {type: "text/plain"})
-    return URL.createObjectURL(blob)
 }
+
+const downloadFile = (gistFileID) => new Promise((resolve, reject) => {
+    const url = `https://gist.githubusercontent.com${gistFileID}`
+
+    fetch(url)
+        .then(response => {
+            const blob = response.blob()
+            resolve(blob)
+        })
+        .catch(error => {
+            reject(error)
+        })
+})
 
 const validate_filename = (name) => {
     //replace | * ? \ : < > $
@@ -68,11 +84,11 @@ const validate_filename = (name) => {
 
 
 const getGistInfo = (member) => new Promise((resolve, reject) => {
-    const URL = getGistURL(member)
-    fetch(URL)
+    const url = getGistURL(member)
+    fetch(url)
         .then(response => response.text())
         .then(text => {
-            console.log('Get data from gist', URL)
+            console.log('Get data from gist', url)
             // console.log(text)
             let time, codes;
             [time, codes] = parseHTML(text)
@@ -86,8 +102,8 @@ const getGistInfo = (member) => new Promise((resolve, reject) => {
 
 const getGistURL = (member) => {
     // To prevent malicious attack, create URL with fixed domain
-    const URL = `https://gist.github.com/${member.githubID}/${member.gistID}`
-    return URL
+    const url = `https://gist.github.com/${member.githubID}/${member.gistID}`
+    return url
 }
 
 const parseHTML = (html) => {
@@ -103,7 +119,7 @@ const parseHTML = (html) => {
 const getCode = (buttonDivs) => {
     let codes = []
     for(let buttonDiv of buttonDivs){
-        buttonDiv.firstElementChild.getAttribute('href')
+        codes.push(buttonDiv.firstElementChild.getAttribute('href'))
     }
 
     return codes
