@@ -3,27 +3,28 @@
 // Recieved Message from script.js
 chrome.runtime.onMessage.addListener(async (request, sender) => {
     console.log('got member data', request)
-    const memberData = request;
+    let {day, members} = request
 
-    for(let member of memberData){
+
+    for(let member of members){
         // Member is not in list
-        if (!isMemberInList(member))
+        if (!member.exist)
             continue
 
         try {
-            [member.timeout, member.code] =  await getGistInfo(member)
+            [member.timeout, member.codes] =  await getGistInfo(member)
         } catch(error) {
             alert(error)
             console.error('error occured on getting data from gist page')
             return
         }
     }
-    console.log(memberData)
+    console.log(members)
 
     let report = ''
 
-    for(let member of memberData){
-        if (isMemberInList(member)){
+    for(let member of members){
+        if (member.exist){
             const URL = `https://gist.githubusercontent.com${member.code}`
             const fileExt = member.code.split('.').slice(-1)[0]
             console.log(fileExt)
@@ -50,13 +51,6 @@ chrome.runtime.onMessage.addListener(async (request, sender) => {
 
 })
 
-const isMemberInList = (member) => {
-    if (member.gistID === null)
-        return false
-    else
-        return true
-}
-
 const createURLBlob = (report) => {
     const blob = new Blob([report], {type: "text/plain"})
     return URL.createObjectURL(blob)
@@ -80,9 +74,9 @@ const getGistInfo = (member) => new Promise((resolve, reject) => {
         .then(text => {
             console.log('Get data from gist', URL)
             // console.log(text)
-            let time, code;
-            [time, code] = parseHTML(text)
-            resolve([time, code])
+            let time, codes;
+            [time, codes] = parseHTML(text)
+            resolve([time, codes])
         })
         .catch(error => {
             reject(error)
@@ -107,10 +101,12 @@ const parseHTML = (html) => {
 }
 
 const getCode = (buttonDivs) => {
-    // Assume first element is the right file
-    const code = buttonDivs[0].firstElementChild.getAttribute('href')
+    let codes = []
+    for(let buttonDiv of buttonDivs){
+        buttonDiv.firstElementChild.getAttribute('href')
+    }
 
-    return code
+    return codes
 }
 
 // Deprecated
