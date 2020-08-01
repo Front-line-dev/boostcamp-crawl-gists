@@ -1,5 +1,7 @@
+// To prevent hacking from other apps, use random string
 const MEMBER_KEY = '5ff197ed552d672a6ce77648052586f3c0492fd5846b300a6f786fbdef74fa66'
 
+// Accessing chrome sync storage is call-back method
 const getMemberList = () => new Promise(resolve => {
     chrome.storage.sync.get([MEMBER_KEY], (result) =>{
         // If not initialized
@@ -27,8 +29,9 @@ const setMemberList = (memberList) => {
     refreshMemberList(memberList)
 }
 
+//  Read string from input-box and add it to member list
 const addMember = async () => {
-    const inputBox = document.getElementById('id-input')
+    const inputBox = document.getElementById('input-box')
     const memberID = inputBox.value
     inputBox.value = ''
 
@@ -46,6 +49,7 @@ const deleteMembers = () => {
     refreshMemberList([])
 }
 
+//  Rerender member list on popup page
 const refreshMemberList = (memberList) => {
     const ul = document.getElementById('member-list')
     ul.innerText = ''   // Erase list
@@ -59,6 +63,7 @@ const refreshMemberList = (memberList) => {
     }
 }
 
+// Send message to current open tab to start crawling
 const crawlGists = async () => {
     const memberList = await getMemberList()
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
@@ -69,13 +74,22 @@ const crawlGists = async () => {
     })
 }
 
+// Since chrome extension cannot declare functions on html page, add event listener
 window.onload = async () => {
     // Add Event listener
     document.getElementById('crawl').addEventListener('click', crawlGists)
     document.getElementById('add-member').addEventListener('click', addMember)
     document.getElementById('delete-members').addEventListener('click', deleteMembers)
+    document.getElementById('input-box').addEventListener("keydown", ({key}) => {
+        if (key === "Enter") {
+            event.preventDefault();
+            addMember()
+        }
+    })
 
+    // Show registered members
     const memberList = await getMemberList()
     console.log('window load', memberList)
     refreshMemberList(memberList)
 }
+
