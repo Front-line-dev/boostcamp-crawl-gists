@@ -30,6 +30,10 @@ const processGist = async (day, members) => {
     processDownload(day, members)
 }
 
+// Download member's gist files and make it blob object
+// zip blobs into member folder
+// create report and add it to zip
+// download zip file to local storage
 const processDownload = async (day, members) => {
     let report = ''
     let zip = new JSZip()
@@ -42,6 +46,7 @@ const processDownload = async (day, members) => {
 
         let memberFolder = zip.folder(member.memberID)
 
+        // Download files one by one (to prevent heavy network request)
         for(let gistFileID of member.codes){
             let blob = await downloadFile(gistFileID)
             console.log(blob)
