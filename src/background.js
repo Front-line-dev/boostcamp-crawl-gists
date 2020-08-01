@@ -1,4 +1,6 @@
 // https://developer.chrome.com/extensions/xhr
+// Chrome extension guide strongly recommand safe fetch code
+// Whoever modifying this code, Read this document first.
 
 // Recieved Message from script.js
 chrome.runtime.onMessage.addListener((request, sender) => {
@@ -106,6 +108,8 @@ const getGistURL = (member) => {
     return url
 }
 
+// Parse gist html
+// Get [last-edited-time, files(urls)] 
 const parseHTML = (html) => {
     const domparser = new DOMParser()
     const doc = domparser.parseFromString(html, 'text/html')
@@ -116,6 +120,7 @@ const parseHTML = (html) => {
     return [date.toLocaleString(), getCode(buttonDivs)]
 }
 
+// Get code url from 'RAW' button DOM object
 const getCode = (buttonDivs) => {
     let codes = []
     for(let buttonDiv of buttonDivs){
