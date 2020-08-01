@@ -17,8 +17,11 @@ Once you registered peer list(sync to chrome browser), with a click of a button,
 ## Getting Started
 
 - Manual install
+  - Open chrome extension menu
+  - Enable developer mode
+  - Load `src` folder
 
-- Chrome Web Store
+- [Chrome Web Store](https://chrome.google.com/webstore/detail/boostcamp-gists-crawler/fcoacppgdhndoklpengpebfoeodogbgc?hl=ko)
 
 ## Authors
 
