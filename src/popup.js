@@ -56,11 +56,24 @@ const refreshMemberList = (memberList) => {
 
     console.log('refresh', memberList)
 
+    // If members are exist
     for (let member of memberList){
-        let li = document.createElement('li')
-        li.innerText = member
-        ul.appendChild(li)
+        addList(member)
     }
+
+    // No members
+    if (memberList.length === 0){
+        addList('Please add members')
+    }
+}
+
+const addList = (text) => {
+    const ul = document.getElementById('member-list')
+    const strong = document.createElement('strong')
+    ul.appendChild(strong)
+    const li = document.createElement('li')
+    strong.appendChild(li)
+    li.innerText = text
 }
 
 // Send message to current open tab to start crawling
@@ -72,6 +85,11 @@ const crawlGists = async () => {
         console.log(tabs)
         chrome.tabs.sendMessage(tabs[0].id, memberList)
     })
+    const crawlButton = document.getElementById('crawl')
+    crawlButton.disabled = true
+    crawlButton.style.backgroundColor = 'grey'
+    crawlButton.style.cursor = 'auto'
+    crawlButton.innerText = 'Downloading...'
 }
 
 // Since chrome extension cannot declare functions on html page, add event listener

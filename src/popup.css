@@ -1,7 +1,41 @@
 body {
     text-align: center;
+    width: 220px;
 }
 
 button {
-    margin: 10px;
+    font-size: 2em;
+    border: none;
+    padding: 10px 20px;
+    color: white;
+    cursor: pointer;
+}
+
+input {
+    /* padding: 1em 0em; */
+    margin: 10px 0px;
+    max-width: 175px;
+    font-size: 1.5em;
+}
+
+ul {
+    list-style-type: none;
+    padding-inline-start: 0px;
+    font-size: 1.5em;
+}
+
+li {
+    padding: 5px 0px
+}
+
+.blue {
+    background-color: deepskyblue;
+}
+
+.green {
+    background-color: limegreen;
+}
+
+.red {
+    background-color: crimson;
 }
