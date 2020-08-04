@@ -1,6 +1,8 @@
 body {
     text-align: center;
     width: 220px;
+    background-color: white;
+    color: black;
 }
 
 button {

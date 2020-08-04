@@ -20,9 +20,9 @@ const processGist = async (day, members) => {
         try {
             [member.timeout, member.codes] =  await getGistInfo(member)
         } catch(error) {
-            alert(error)
-            console.error('error occured on getting data from gist page')
-            return
+            alert(`${member.memberID} ${error}`)
+            console.error(member.memberID, 'error occured on getting data from gist page')
+            member.exist = false
         }
     }
     console.log(members)
@@ -46,14 +46,19 @@ const processDownload = async (day, members) => {
 
         let memberFolder = zip.folder(member.memberID)
 
-        // Download files one by one (to prevent heavy network request)
-        for(let gistFileID of member.codes){
-            let blob = await downloadFile(gistFileID)
-            console.log(blob)
-            memberFolder.file(gistFileID.split('/').splice(-1)[0], blob)
-        }
+        try {
+            // Download files one by one (to prevent heavy network request)
+            for(let gistFileID of member.codes){
+                let blob = await downloadFile(gistFileID)
+                console.log(blob)
+                memberFolder.file(gistFileID.split('/').splice(-1)[0], blob)
+            }
 
-        report += `${member.memberID} ${member.timeout} ${getGistURL(member)}\n`
+            report += `${member.memberID} ${member.timeout} ${getGistURL(member)}\n`
+        } catch (error) {
+            alert(error)
+        }
+        
     }
 
     zip.file('report.txt', new Blob([report], {type: "text/plain"}))
@@ -109,8 +114,13 @@ const getGistInfo = (member) => new Promise((resolve, reject) => {
 
 const getGistURL = (member) => {
     // To prevent malicious attack, create URL with fixed domain
-    const url = `https://gist.github.com/${member.githubID}/${member.gistID}`
-    return url
+
+    // .git url exception
+    if (member.githubID === null){
+        return `https://gist.github.com/${member.gistID}`
+    } else {
+        return `https://gist.github.com/${member.githubID}/${member.gistID}`
+    }
 }
 
 // Parse gist html

@@ -57,6 +57,11 @@ const getGistAddr = (memberID, gistTable) => {
 
     const githubID = gistTable[memberID].githubID
     const gistID = gistTable[memberID].gistID
+
+    // .git url exception
+    if (githubID === 'gist.github.com'){
+        return [true, null, gistID]
+    }
     return [true, githubID, gistID]
 }
 
