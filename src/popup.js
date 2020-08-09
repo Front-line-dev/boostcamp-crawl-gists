@@ -38,6 +38,7 @@ const addMember = async () => {
     // If user input is valid
     if (memberID) {
         const memberList = await getMemberList()
+        if (memberList.includes(memberID)) return;
         memberList.push(memberID)
         memberList.sort();
         setMemberList(memberList)
