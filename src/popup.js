@@ -39,6 +39,7 @@ const addMember = async () => {
     if (memberID) {
         const memberList = await getMemberList()
         memberList.push(memberID)
+        memberList.sort();
         setMemberList(memberList)
     }
 }
