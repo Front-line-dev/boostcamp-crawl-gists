@@ -38,7 +38,9 @@ const addMember = async () => {
     // If user input is valid
     if (memberID) {
         const memberList = await getMemberList()
+        if (memberList.includes(memberID)) return;
         memberList.push(memberID)
+        memberList.sort();
         setMemberList(memberList)
     }
 }
@@ -98,7 +100,10 @@ window.onload = async () => {
     document.getElementById('crawl').addEventListener('click', crawlGists)
     document.getElementById('add-member').addEventListener('click', addMember)
     document.getElementById('delete-members').addEventListener('click', deleteMembers)
-    document.getElementById('input-box').addEventListener("keydown", ({key}) => {
+
+    const inputBox = document.getElementById('input-box');
+    inputBox.addEventListener("keyup", () => inputBox.value = inputBox.value.toUpperCase());
+    inputBox.addEventListener("keydown", ({ key }) => {
         if (key === "Enter") {
             event.preventDefault();
             addMember()
