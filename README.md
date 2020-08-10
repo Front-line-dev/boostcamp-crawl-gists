@@ -23,9 +23,13 @@ Once you registered peer list(sync to chrome browser), with a click of a button,
 
 - [Chrome Web Store](https://chrome.google.com/webstore/detail/boostcamp-gists-crawler/fcoacppgdhndoklpengpebfoeodogbgc?hl=ko)
 
-## Authors
+## Author
 
 Front-line-dev
+
+## Contributors
+
+changheedev
 
 ## License
 
